@@ -34,5 +34,16 @@ mergeInto(LibraryManager.library, {
 
     WebGL_IsPointerLocked: function () {
         return (document.pointerLockElement != null);
+    },
+
+    WebGL_IsMobileBrowser: function () {
+        var userAgent = navigator.userAgent || navigator.vendor || window.opera || "";
+        // スマホ・タブレットのUserAgent正規表現
+        var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+        // iPadOS 13以降（MacIntelと名乗るがタッチスクリーンを持つ）の対応
+        if (!isMobile && navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) {
+            isMobile = true;
+        }
+        return isMobile;
     }
 });

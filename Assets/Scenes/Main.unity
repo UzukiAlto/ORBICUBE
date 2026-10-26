@@ -2162,9 +2162,9 @@ MonoBehaviour:
   currentScreen: {fileID: 1711235202}
   playerCameraObj: {fileID: 242682541}
   rotateCenterObj: {fileID: 1122708028}
+  playerCameraInputObject: {fileID: 2141258468}
   configData: {fileID: 983244555}
   sensitivity: 0
-  playerCameraInputObject: {fileID: 2141258468}
   gameManager: {fileID: 911674053}
 --- !u!114 &242682548
 MonoBehaviour:
@@ -3708,6 +3708,52 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1513004972054377597, guid: 536098831eb24cb4b8b72525b1ece372, type: 3}
   m_PrefabInstance: {fileID: 673004336}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &685652988
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 685652989}
+  - component: {fileID: 685652990}
+  m_Layer: 0
+  m_Name: MobileInputManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &685652989
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 685652988}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2103085883}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &685652990
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 685652988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e061e8776528e843a5390f311343ca6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  debugForceMobile: 0
+  mobileUIRoot: {fileID: 0}
 --- !u!1 &704901374
 GameObject:
   m_ObjectHideFlags: 0
@@ -4943,9 +4989,9 @@ MonoBehaviour:
   currentScreen: {fileID: 1122372181}
   playerCameraObj: {fileID: 963194225}
   rotateCenterObj: {fileID: 2128804499}
+  playerCameraInputObject: {fileID: 2141258468}
   configData: {fileID: 983244555}
   sensitivity: 0
-  playerCameraInputObject: {fileID: 2141258468}
 --- !u!1 &970690751
 GameObject:
   m_ObjectHideFlags: 0
@@ -6188,6 +6234,7 @@ Transform:
   - {fileID: 1866758593}
   - {fileID: 815956861}
   - {fileID: 827461092}
+  - {fileID: 2103085883}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!224 &1266616260 stripped
@@ -11180,6 +11227,38 @@ MonoBehaviour:
   pyramids: {fileID: 45070502540813101, guid: ab4ccfa25b4299a49b97aab6c1c0993e, type: 3}
   blockParent: {fileID: 595947460}
   blockMaterial: {fileID: 0}
+--- !u!1 &2103085882
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2103085883}
+  m_Layer: 0
+  m_Name: Mobile
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2103085883
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2103085882}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 685652989}
+  m_Father: {fileID: 1262013571}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2112515199
 GameObject:
   m_ObjectHideFlags: 0
