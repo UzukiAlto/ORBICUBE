@@ -46,7 +46,7 @@ namespace Game
 
         protected override void OnCameraMoveStart(Vector2 pointerPos)
         {
-            // ポーズボタン等の操作UIをクリックした際は、カーソルをロックせずUIクリックを成立させるため
+            // ポーズボタンやジョイスティック等の操作UIをクリックした際は、カメラ回転を開始せずUI操作を優先させるため
             if (IsPointerOverPauseUI())
             {
                 return;
@@ -63,7 +63,11 @@ namespace Game
             }
 
             Vector2 screenPos = Vector2.zero;
-            if (Mouse.current != null)
+            if (Pointer.current != null)
+            {
+                screenPos = Pointer.current.position.ReadValue();
+            }
+            else if (Mouse.current != null)
             {
                 screenPos = Mouse.current.position.ReadValue();
             }
@@ -87,10 +91,11 @@ namespace Game
                     continue;
                 }
 
-                // ポーズボタンのコンポーネント（MenuCubeやEventTrigger、Button等）を持つUIを検知
+                // ポーズボタンやジョイスティック等の操作UIがドラッグ開始位置にある場合はカメラ回転から除外するため
                 if (result.gameObject.GetComponentInParent<MenuCube>() != null ||
                     result.gameObject.GetComponentInParent<EventTrigger>() != null ||
-                    result.gameObject.GetComponentInParent<Button>() != null)
+                    result.gameObject.GetComponentInParent<Button>() != null ||
+                    result.gameObject.GetComponentInParent<Joystick>() != null)
                 {
                     return true;
                 }

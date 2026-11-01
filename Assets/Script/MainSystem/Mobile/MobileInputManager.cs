@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using UnityEngine;
+using Game;
 
 namespace MainSystem
 {
@@ -13,6 +14,7 @@ namespace MainSystem
 
         [Tooltip("モバイル時のみアクティブにするUIルートオブジェクト（ジョイスティック等）")]
         [SerializeField] private GameObject mobileUIRoot;
+        [SerializeField] private GameManager gameManager;
 
         /// <summary>
         /// 現在の実行環境がモバイル端末かどうか
@@ -28,11 +30,59 @@ namespace MainSystem
         {
             IsMobile = CheckIsMobile();
 
-            // モバイル専用UI（ジョイスティック等）の初期表示状態を適用
-            if (mobileUIRoot != null)
+            // ゲーム開始前の初期状態ではモバイルUIを表示しないため
+            HideMobileUI();
+        }
+
+        private void OnEnable()
+        {
+            SubscribeGameEvents();
+        }
+        private void SubscribeGameEvents()
+        {
+            // PC環境ではモバイルUIの表示切り替えを行う必要がないため
+            if (!IsMobile)
             {
-                mobileUIRoot.SetActive(IsMobile);
+                return;
             }
+
+            if (gameManager == null)
+            {
+                return;
+            }
+
+            gameManager.OnGameStarted += ShowMobileUI;
+            gameManager.OnGameUnpaused += HandleGameUnpaused;
+
+            gameManager.OnGameReady += HideMobileUI;
+            gameManager.OnGamePaused += HideMobileUI;
+            gameManager.OnGameFailed += HideMobileUI;
+            gameManager.OnGameOver += HideMobileUI;
+        }
+
+        private void OnDisable()
+        {
+            UnbscribeGameEvents();
+        }
+        private void UnbscribeGameEvents()
+        {
+            if (!IsMobile)
+            {
+                return;
+            }
+
+            if (gameManager == null)
+            {
+                return;
+            }
+
+            gameManager.OnGameStarted -= ShowMobileUI;
+            gameManager.OnGameUnpaused -= HandleGameUnpaused;
+
+            gameManager.OnGameReady -= HideMobileUI;
+            gameManager.OnGamePaused -= HideMobileUI;
+            gameManager.OnGameFailed -= HideMobileUI;
+            gameManager.OnGameOver -= HideMobileUI;
         }
 
         /// <summary>
@@ -56,6 +106,37 @@ namespace MainSystem
             // デスクトップやエディタ通常時のフォールバック
             return Application.isMobilePlatform;
 #endif
+        }
+
+        private void HandleGameUnpaused(bool wasPlayingBeforePause)
+        {
+            // ポーズ前にプレイ中でなかった場合（発射待機中など）はジョイスティックを表示しないため
+            if (!wasPlayingBeforePause)
+            {
+                return;
+            }
+
+            ShowMobileUI();
+        }
+
+        private void ShowMobileUI()
+        {
+            if (mobileUIRoot == null)
+            {
+                return;
+            }
+
+            mobileUIRoot.SetActive(true);
+        }
+
+        private void HideMobileUI()
+        {
+            if (mobileUIRoot == null)
+            {
+                return;
+            }
+
+            mobileUIRoot.SetActive(false);
         }
     }
 }

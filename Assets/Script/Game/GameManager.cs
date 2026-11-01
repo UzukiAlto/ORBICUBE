@@ -25,7 +25,10 @@ namespace Game
         public event Action OnGameFailed;
         public event Action OnGameOver;
         public event Action OnGamePaused;
-        public event Action<bool> OnGameUnpaused; // ポーズ前にプレイ中ならtrue、そうでなければfalseを渡す
+        /// <summary>
+        /// ポーズ前にプレイ中ならtrue、そうでなければfalseを渡す
+        /// </summary>
+        public event Action<bool> OnGameUnpaused;
 
         void Update()
         {
