@@ -90,11 +90,14 @@ namespace MainSystem
         /// </summary>
         private bool CheckIsMobile()
         {
+
+#if UNITY_EDITOR
             // エディタ上でのスマホUIや挙動の動作確認を容易にするため
             if (debugForceMobile)
             {
                 return true;
             }
+#endif
 
 #if UNITY_WEBGL && !UNITY_EDITOR
             // WebGL環境ではブラウザのUserAgentおよびタッチ機能から判定
