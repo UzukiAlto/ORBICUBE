@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Assets/Free Assets.meta
-guid: d22d857033c1fb44ca8999b5578678b9
-========
 guid: 08397fe98b964d4498f290a330f080d7
->>>>>>>> refactor:Assets/Editor.meta
 folderAsset: yes
 DefaultImporter:
   externalObjects: {}
