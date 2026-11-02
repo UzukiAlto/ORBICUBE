@@ -51,5 +51,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "3DBreakout.sln"
+    "dotnet.defaultSolution": "ORBICUBE.sln"
 }
