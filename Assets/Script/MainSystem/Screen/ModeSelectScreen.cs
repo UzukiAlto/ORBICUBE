@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 namespace MainSystem
@@ -9,6 +8,8 @@ namespace MainSystem
     /// </summary>
     public class ModeSelectScreen : ScreenBase
     {
+        public event Action<bool> OnOperationEnableChanged;
+
         public override void Hide()
         {
             base.Hide();
@@ -21,6 +22,13 @@ namespace MainSystem
             base.Show();
             screenCanvas.SetActive(true);
             SetEnableOperation(true);
+        }
+
+        public override void SetEnableOperation(bool enable)
+        {
+            base.SetEnableOperation(enable);
+            // サブ画面（Config・Score）への遷移時を含め、モード選択操作の有効状態にUI表示を追従させるため
+            OnOperationEnableChanged?.Invoke(enable);
         }
     }
 }
