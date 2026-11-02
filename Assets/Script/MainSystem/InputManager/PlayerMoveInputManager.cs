@@ -70,8 +70,16 @@ namespace MainSystem
 
         private void HandleMovePerformed(InputAction.CallbackContext context)
         {
+            bool wasMoving = isMoving;
             isMoving = true;
             moveInput = context.ReadValue<Vector2>();
+
+            // スティックの傾き変化などでperformedが連続発火した際に開始イベントが重複発火するのを防ぐため
+            if (wasMoving)
+            {
+                return;
+            }
+
             OnMoveStart?.Invoke(moveInput);
         }
         private void HandleMoveCanceled(InputAction.CallbackContext context)
