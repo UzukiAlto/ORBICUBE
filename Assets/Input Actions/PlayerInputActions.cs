@@ -330,6 +330,17 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
+                    ""id"": ""d0f1b245-7e6a-4b8c-ad4e-5f6a7b8c9d0e"",
+                    ""path"": ""<Gamepad>/buttonNorth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Retry"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
                     ""id"": ""d56fd263-3a4c-4bf6-a586-b068f2656c6a"",
                     ""path"": ""<Keyboard>/escape"",
                     ""interactions"": """",

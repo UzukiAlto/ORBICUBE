@@ -13,18 +13,29 @@ namespace MainSystem
         [Tooltip("エディタ上でスマホ動作をテストするための強制フラグ")]
         [SerializeField] private bool debugForceMobile = false;
 
-        [Tooltip("ゲームプレイ中にモバイル時のみアクティブにするUIルートオブジェクト")]
+        [Tooltip("ゲームプレイ中にモバイル時のみアクティブにするUIルートオブジェクト（ジョイスティック・面切替ボタン等）")]
         [SerializeField] private GameObject gameUIRoot;
 
-        [Tooltip("モード選択中にモバイル時のみアクティブにするUIルートオブジェクト")]
-        [SerializeField] private GameObject modeSelectUIRoot;
+        [Tooltip("SystemInput系ボタン（Submit・Retry）をまとめるUIルートオブジェクト")]
+        [SerializeField] private GameObject systemInputUIRoot;
+
+        [Tooltip("モード決定・ゲーム開始（Submit）用のボタンオブジェクト")]
+        [SerializeField] private GameObject submitButton;
+
+        [Tooltip("ゲームオーバー時のリトライ（Retry）用のボタンオブジェクト")]
+        [SerializeField] private GameObject retryButton;
 
         [SerializeField] private GameManager gameManager;
         [SerializeField] private ModeSelectScreen modeSelectScreen;
 
         // 1フレーム待機中に表示状態が再度切り替わった場合の不整合を防ぐための目標状態フラグ
         private bool shouldShowGameUI = false;
-        private bool shouldShowModeSelectUI = false;
+        private bool shouldShowSubmitButton = false;
+        private bool shouldShowRetryButton = false;
+
+        // ポーズ解除時の復帰先や画面遷移時の遅れイベント判定のためにゲーム側の待機状態を保持
+        private bool isWaitingForGameStart = false;
+        private bool isGameOverState = false;
 
         /// <summary>
         /// 現在の実行環境がモバイル端末かどうか
@@ -47,16 +58,28 @@ namespace MainSystem
         private void InitializeMobileUI()
         {
             shouldShowGameUI = false;
-            shouldShowModeSelectUI = false;
+            shouldShowSubmitButton = false;
+            shouldShowRetryButton = false;
 
             if (gameUIRoot != null)
             {
                 gameUIRoot.SetActive(false);
             }
 
-            if (modeSelectUIRoot != null)
+            if (systemInputUIRoot != null)
             {
-                modeSelectUIRoot.SetActive(false);
+                // SystemInputUIRoot自体はモバイル時のみ有効化し、配下の各ボタンで個別に表示を切り替えるため
+                systemInputUIRoot.SetActive(IsMobile);
+            }
+
+            if (submitButton != null)
+            {
+                submitButton.SetActive(false);
+            }
+
+            if (retryButton != null)
+            {
+                retryButton.SetActive(false);
             }
         }
 
@@ -85,13 +108,12 @@ namespace MainSystem
                 return;
             }
 
-            gameManager.OnGameStarted += ShowGameMobileUI;
+            gameManager.OnGameReady += HandleGameReady;
+            gameManager.OnGameStarted += HandleGameStarted;
+            gameManager.OnGameFailed += HandleGameFailed;
+            gameManager.OnGameOver += HandleGameOver;
+            gameManager.OnGamePaused += HandleGamePaused;
             gameManager.OnGameUnpaused += HandleGameUnpaused;
-
-            gameManager.OnGameReady += HideGameMobileUI;
-            gameManager.OnGamePaused += HideGameMobileUI;
-            gameManager.OnGameFailed += HideGameMobileUI;
-            gameManager.OnGameOver += HideGameMobileUI;
         }
 
         private void SubscribeModeSelectEvents()
@@ -107,7 +129,7 @@ namespace MainSystem
                 return;
             }
 
-            modeSelectScreen.OnOperationEnableChanged += SetModeSelectMobileUIActive;
+            modeSelectScreen.OnOperationEnableChanged += HandleModeSelectOperationChanged;
         }
 
         private void UnsubscribeGameEvents()
@@ -122,13 +144,12 @@ namespace MainSystem
                 return;
             }
 
-            gameManager.OnGameStarted -= ShowGameMobileUI;
+            gameManager.OnGameReady -= HandleGameReady;
+            gameManager.OnGameStarted -= HandleGameStarted;
+            gameManager.OnGameFailed -= HandleGameFailed;
+            gameManager.OnGameOver -= HandleGameOver;
+            gameManager.OnGamePaused -= HandleGamePaused;
             gameManager.OnGameUnpaused -= HandleGameUnpaused;
-
-            gameManager.OnGameReady -= HideGameMobileUI;
-            gameManager.OnGamePaused -= HideGameMobileUI;
-            gameManager.OnGameFailed -= HideGameMobileUI;
-            gameManager.OnGameOver -= HideGameMobileUI;
         }
 
         private void UnsubscribeModeSelectEvents()
@@ -143,7 +164,7 @@ namespace MainSystem
                 return;
             }
 
-            modeSelectScreen.OnOperationEnableChanged -= SetModeSelectMobileUIActive;
+            modeSelectScreen.OnOperationEnableChanged -= HandleModeSelectOperationChanged;
         }
 
         /// <summary>
@@ -171,51 +192,149 @@ namespace MainSystem
 #endif
         }
 
+        private void HandleModeSelectOperationChanged(bool isEnabled)
+        {
+            if (isEnabled)
+            {
+                isWaitingForGameStart = false;
+                isGameOverState = false;
+                SetGameMobileUIActive(false);
+                SetSubmitButtonActive(true);
+                SetRetryButtonActive(false);
+                return;
+            }
+
+            // ゲーム画面への遷移アニメーション完了時に遅れてModeSelectScreen.Hide()が呼ばれた際、
+            // すでにゲーム開始待機中として表示されているSubmitボタンを誤って消さないようにするため
+            if (isWaitingForGameStart)
+            {
+                return;
+            }
+
+            SetSubmitButtonActive(false);
+        }
+
+        private void HandleGameReady()
+        {
+            isWaitingForGameStart = true;
+            isGameOverState = false;
+
+            SetGameMobileUIActive(false);
+            SetSubmitButtonActive(true);
+            SetRetryButtonActive(false);
+        }
+
+        private void HandleGameStarted()
+        {
+            isWaitingForGameStart = false;
+            isGameOverState = false;
+
+            SetGameMobileUIActive(true);
+            SetSubmitButtonActive(false);
+            SetRetryButtonActive(false);
+        }
+
+        private void HandleGameFailed()
+        {
+            // 残機が残っている状態でミスした場合は次のボール発射（Submit）待機になるため
+            isWaitingForGameStart = true;
+            isGameOverState = false;
+
+            SetGameMobileUIActive(false);
+            SetSubmitButtonActive(true);
+            SetRetryButtonActive(false);
+        }
+
+        private void HandleGameOver()
+        {
+            isWaitingForGameStart = false;
+            isGameOverState = true;
+
+            SetGameMobileUIActive(false);
+            SetSubmitButtonActive(false);
+            SetRetryButtonActive(true);
+        }
+
+        private void HandleGamePaused()
+        {
+            // ポーズ中はポーズパネルの操作と重ならないよう全てのモバイル操作UIを隠すため
+            SetGameMobileUIActive(false);
+            SetSubmitButtonActive(false);
+            SetRetryButtonActive(false);
+        }
+
         private void HandleGameUnpaused(bool wasPlayingBeforePause)
         {
-            // ポーズ前にプレイ中でなかった場合（発射待機中など）はゲーム用モバイルUIを表示しないため
-            if (!wasPlayingBeforePause)
+            if (wasPlayingBeforePause)
             {
+                SetGameMobileUIActive(true);
                 return;
             }
 
-            ShowGameMobileUI();
-        }
-
-        private void ShowGameMobileUI()
-        {
-            shouldShowGameUI = true;
-
-            if (gameUIRoot == null)
+            if (isGameOverState)
             {
+                SetRetryButtonActive(true);
                 return;
             }
 
-            gameUIRoot.SetActive(true);
+            if (isWaitingForGameStart)
+            {
+                SetSubmitButtonActive(true);
+            }
         }
 
-        private void HideGameMobileUI()
+        private void SetGameMobileUIActive(bool isActive)
         {
-            shouldShowGameUI = false;
-            DeactivateGameUINextFrameAsync().Forget();
-        }
-
-        private void SetModeSelectMobileUIActive(bool isActive)
-        {
-            shouldShowModeSelectUI = isActive;
+            shouldShowGameUI = isActive;
 
             if (isActive)
             {
-                if (modeSelectUIRoot == null)
+                if (gameUIRoot == null)
                 {
                     return;
                 }
 
-                modeSelectUIRoot.SetActive(true);
+                gameUIRoot.SetActive(true);
                 return;
             }
 
-            DeactivateModeSelectUINextFrameAsync().Forget();
+            DeactivateGameUINextFrameAsync().Forget();
+        }
+
+        private void SetSubmitButtonActive(bool isActive)
+        {
+            shouldShowSubmitButton = isActive;
+
+            if (isActive)
+            {
+                if (submitButton == null)
+                {
+                    return;
+                }
+
+                submitButton.SetActive(true);
+                return;
+            }
+
+            DeactivateSubmitButtonNextFrameAsync().Forget();
+        }
+
+        private void SetRetryButtonActive(bool isActive)
+        {
+            shouldShowRetryButton = isActive;
+
+            if (isActive)
+            {
+                if (retryButton == null)
+                {
+                    return;
+                }
+
+                retryButton.SetActive(true);
+                return;
+            }
+
+            DeactivateRetryButtonNextFrameAsync().Forget();
         }
 
         private async UniTaskVoid DeactivateGameUINextFrameAsync()
@@ -237,23 +356,42 @@ namespace MainSystem
             gameUIRoot.SetActive(false);
         }
 
-        private async UniTaskVoid DeactivateModeSelectUINextFrameAsync()
+        private async UniTaskVoid DeactivateSubmitButtonNextFrameAsync()
         {
             // Input Systemのイベント通知ループ途中でOnScreenControlが無効化され仮想デバイスが破棄されるのを防ぐため
             await UniTask.NextFrame(this.GetCancellationTokenOnDestroy());
 
             // 待機中に再度表示要求が来ていた場合は非表示処理を中断するため
-            if (shouldShowModeSelectUI)
+            if (shouldShowSubmitButton)
             {
                 return;
             }
 
-            if (modeSelectUIRoot == null)
+            if (submitButton == null)
             {
                 return;
             }
 
-            modeSelectUIRoot.SetActive(false);
+            submitButton.SetActive(false);
+        }
+
+        private async UniTaskVoid DeactivateRetryButtonNextFrameAsync()
+        {
+            // Input Systemのイベント通知ループ途中でOnScreenControlが無効化され仮想デバイスが破棄されるのを防ぐため
+            await UniTask.NextFrame(this.GetCancellationTokenOnDestroy());
+
+            // 待機中に再度表示要求が来ていた場合は非表示処理を中断するため
+            if (shouldShowRetryButton)
+            {
+                return;
+            }
+
+            if (retryButton == null)
+            {
+                return;
+            }
+
+            retryButton.SetActive(false);
         }
     }
 }
