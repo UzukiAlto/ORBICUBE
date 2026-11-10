@@ -16,13 +16,16 @@ namespace MainSystem
         [Tooltip("ゲームプレイ中にモバイル時のみアクティブにするUIルートオブジェクト（ジョイスティック・面切替ボタン等）")]
         [SerializeField] private GameObject gameUIRoot;
 
-        [Tooltip("SystemInput系ボタン（Submit・Retry）をまとめるUIルートオブジェクト")]
+        [Tooltip("SystemInput系ボタン（Submit・GameStart・Retry）をまとめるUIルートオブジェクト")]
         [SerializeField] private GameObject systemInputUIRoot;
 
-        [Tooltip("モード決定・ゲーム開始（Submit）用のボタンオブジェクト")]
+        [Tooltip("モード選択画面でのモード決定（Submit）用のボタンオブジェクト")]
         [SerializeField] private GameObject submitButton;
 
-        [Tooltip("ゲームオーバー時のリトライ（Retry）用のボタンオブジェクト")]
+        [Tooltip("ゲーム画面でのボール発射（Submit）用の画面タップ領域オブジェクト")]
+        [SerializeField] private GameObject gameStartButton;
+
+        [Tooltip("ゲームオーバー時のリトライ（Retry）用の画面タップ領域オブジェクト")]
         [SerializeField] private GameObject retryButton;
 
         [SerializeField] private GameManager gameManager;
@@ -31,9 +34,10 @@ namespace MainSystem
         // 1フレーム待機中に表示状態が再度切り替わった場合の不整合を防ぐための目標状態フラグ
         private bool shouldShowGameUI = false;
         private bool shouldShowSubmitButton = false;
+        private bool shouldShowGameStartButton = false;
         private bool shouldShowRetryButton = false;
 
-        // ポーズ解除時の復帰先や画面遷移時の遅れイベント判定のためにゲーム側の待機状態を保持
+        // ポーズ解除時の復帰先を判定するためにゲーム側の待機状態を保持
         private bool isWaitingForGameStart = false;
         private bool isGameOverState = false;
 
@@ -59,6 +63,7 @@ namespace MainSystem
         {
             shouldShowGameUI = false;
             shouldShowSubmitButton = false;
+            shouldShowGameStartButton = false;
             shouldShowRetryButton = false;
 
             if (gameUIRoot != null)
@@ -75,6 +80,11 @@ namespace MainSystem
             if (submitButton != null)
             {
                 submitButton.SetActive(false);
+            }
+
+            if (gameStartButton != null)
+            {
+                gameStartButton.SetActive(false);
             }
 
             if (retryButton != null)
@@ -200,14 +210,8 @@ namespace MainSystem
                 isGameOverState = false;
                 SetGameMobileUIActive(false);
                 SetSubmitButtonActive(true);
+                SetGameStartButtonActive(false);
                 SetRetryButtonActive(false);
-                return;
-            }
-
-            // ゲーム画面への遷移アニメーション完了時に遅れてModeSelectScreen.Hide()が呼ばれた際、
-            // すでにゲーム開始待機中として表示されているSubmitボタンを誤って消さないようにするため
-            if (isWaitingForGameStart)
-            {
                 return;
             }
 
@@ -220,7 +224,8 @@ namespace MainSystem
             isGameOverState = false;
 
             SetGameMobileUIActive(false);
-            SetSubmitButtonActive(true);
+            SetSubmitButtonActive(false);
+            SetGameStartButtonActive(true);
             SetRetryButtonActive(false);
         }
 
@@ -231,17 +236,19 @@ namespace MainSystem
 
             SetGameMobileUIActive(true);
             SetSubmitButtonActive(false);
+            SetGameStartButtonActive(false);
             SetRetryButtonActive(false);
         }
 
         private void HandleGameFailed()
         {
-            // 残機が残っている状態でミスした場合は次のボール発射（Submit）待機になるため
+            // 残機が残っている状態でミスした場合は次のボール発射待機になるため
             isWaitingForGameStart = true;
             isGameOverState = false;
 
             SetGameMobileUIActive(false);
-            SetSubmitButtonActive(true);
+            SetSubmitButtonActive(false);
+            SetGameStartButtonActive(true);
             SetRetryButtonActive(false);
         }
 
@@ -252,6 +259,7 @@ namespace MainSystem
 
             SetGameMobileUIActive(false);
             SetSubmitButtonActive(false);
+            SetGameStartButtonActive(false);
             SetRetryButtonActive(true);
         }
 
@@ -260,6 +268,7 @@ namespace MainSystem
             // ポーズ中はポーズパネルの操作と重ならないよう全てのモバイル操作UIを隠すため
             SetGameMobileUIActive(false);
             SetSubmitButtonActive(false);
+            SetGameStartButtonActive(false);
             SetRetryButtonActive(false);
         }
 
@@ -279,7 +288,7 @@ namespace MainSystem
 
             if (isWaitingForGameStart)
             {
-                SetSubmitButtonActive(true);
+                SetGameStartButtonActive(true);
             }
         }
 
@@ -317,6 +326,24 @@ namespace MainSystem
             }
 
             DeactivateSubmitButtonNextFrameAsync().Forget();
+        }
+
+        private void SetGameStartButtonActive(bool isActive)
+        {
+            shouldShowGameStartButton = isActive;
+
+            if (isActive)
+            {
+                if (gameStartButton == null)
+                {
+                    return;
+                }
+
+                gameStartButton.SetActive(true);
+                return;
+            }
+
+            DeactivateGameStartButtonNextFrameAsync().Forget();
         }
 
         private void SetRetryButtonActive(bool isActive)
@@ -373,6 +400,25 @@ namespace MainSystem
             }
 
             submitButton.SetActive(false);
+        }
+
+        private async UniTaskVoid DeactivateGameStartButtonNextFrameAsync()
+        {
+            // Input Systemのイベント通知ループ途中でOnScreenControlが無効化され仮想デバイスが破棄されるのを防ぐため
+            await UniTask.NextFrame(this.GetCancellationTokenOnDestroy());
+
+            // 待機中に再度表示要求が来ていた場合は非表示処理を中断するため
+            if (shouldShowGameStartButton)
+            {
+                return;
+            }
+
+            if (gameStartButton == null)
+            {
+                return;
+            }
+
+            gameStartButton.SetActive(false);
         }
 
         private async UniTaskVoid DeactivateRetryButtonNextFrameAsync()
