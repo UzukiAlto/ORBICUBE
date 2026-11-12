@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.OnScreen;
 using MainSystem;
 using DG.Tweening;
 
@@ -47,7 +48,7 @@ namespace Game
         protected override void OnCameraMoveStart(Vector2 pointerPos)
         {
             // ポーズボタンやジョイスティック等の操作UIをクリックした際は、カメラ回転を開始せずUI操作を優先させるため
-            if (IsPointerOverPauseUI())
+            if (IsPointerOverPauseUI(pointerPos))
             {
                 return;
             }
@@ -55,15 +56,20 @@ namespace Game
             base.OnCameraMoveStart(pointerPos);
         }
 
-        private bool IsPointerOverPauseUI()
+        private bool IsPointerOverPauseUI(Vector2 viewportPos)
         {
             if (EventSystem.current == null)
             {
                 return false;
             }
 
-            Vector2 screenPos = Vector2.zero;
-            if (Pointer.current != null)
+            // マルチタッチ時に1本目の指（Pointer.current）ではなく、実際にカメラ回転を開始した指の座標で判定するため
+            Vector2 screenPos;
+            if (currentScreen != null && currentScreen.screenCamera != null)
+            {
+                screenPos = currentScreen.screenCamera.ViewportToScreenPoint(viewportPos);
+            }
+            else if (Pointer.current != null)
             {
                 screenPos = Pointer.current.position.ReadValue();
             }
@@ -95,7 +101,8 @@ namespace Game
                 if (result.gameObject.GetComponentInParent<MenuCube>() != null ||
                     result.gameObject.GetComponentInParent<EventTrigger>() != null ||
                     result.gameObject.GetComponentInParent<Button>() != null ||
-                    result.gameObject.GetComponentInParent<Joystick>() != null)
+                    result.gameObject.GetComponentInParent<Joystick>() != null ||
+                    result.gameObject.GetComponentInParent<OnScreenControl>() != null)
                 {
                     return true;
                 }
