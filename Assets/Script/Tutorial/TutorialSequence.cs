@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Game;
+using MainSystem;
 
 namespace Tutorial
 {
@@ -58,6 +59,21 @@ namespace Tutorial
                 }
 
                 step.Visual.gameObject.SetActive(false);
+            }
+        }
+
+        private void Start()
+        {
+            // Awakeの実行順によってOnEnable時点でIsMobileが未確定だった場合でも、初回描画前に確実に非表示化するため
+            if (!MobileInputManager.IsMobile)
+            {
+                return;
+            }
+
+            StopSequence();
+            if (tutorialUI != null)
+            {
+                tutorialUI.ForceHideImmediate();
             }
         }
 
@@ -143,6 +159,17 @@ namespace Tutorial
         public void StartSequence()
         {
             StopSequence();
+
+            // モバイル環境ではPC向けのキー・マウス操作チュートリアルを表示しないため
+            if (MobileInputManager.IsMobile)
+            {
+                if (tutorialUI != null)
+                {
+                    tutorialUI.ForceHideImmediate();
+                }
+
+                return;
+            }
 
             if (steps == null || steps.Count == 0)
             {
