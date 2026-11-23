@@ -53,7 +53,7 @@ namespace MainSystem
         {
             configData.UnsubscribeSensitivity(SetSensitivity);
 
-            // 画面無効化時にカーソルがロックされたまま残るのを防ぐため
+            // 画面無効化時にドラッグ状態のリセットおよびカーソルロック解除を行うため
             UnlockCursor();
 
             if (playerCameraInput != null)
@@ -78,11 +78,14 @@ namespace MainSystem
             }
 
             isCameraMoving = true;
-            // ロック直後に発生する初期ワープデルタを破棄するため
-            skipDeltaFrames = 2;
 
-            // ドラッグ中のマウス移動量を安定して取得するためカーソルをロック
-            WebGLPointerLockBridge.RequestLock();
+            if (!MobileInputManager.IsMobile)
+            {
+                // ロック直後に発生する初期ワープデルタを破棄するため
+                skipDeltaFrames = 2;
+                // ドラッグ中のマウス移動量を安定して取得するためカーソルをロック
+                WebGLPointerLockBridge.RequestLock();
+            }
         }
 
         protected virtual void OnCameraMovingDelta(Vector2 delta)
@@ -112,7 +115,7 @@ namespace MainSystem
 
         protected virtual void OnCameraMoveEnd(Vector2 pointerPos)
         {
-            // 操作可能状態にかかわらず、クリック終了時は確実にカーソルを操作可能状態へ復帰させるため
+            // 操作可能状態にかかわらず、クリック終了時は確実にドラッグ状態を終了しカーソルを復帰させるため
             UnlockCursor();
         }
 
@@ -120,7 +123,11 @@ namespace MainSystem
         {
             isCameraMoving = false;
             skipDeltaFrames = 0;
-            WebGLPointerLockBridge.ExitLock();
+
+            if (!MobileInputManager.IsMobile)
+            {
+                WebGLPointerLockBridge.ExitLock();
+            }
         }
 
         public void Rotate(Vector2 rotationAngle)

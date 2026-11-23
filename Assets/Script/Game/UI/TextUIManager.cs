@@ -17,6 +17,36 @@ namespace Game
         [SerializeField] private TMP_Text retryText;
         [SerializeField] private TMP_Text highScoreText;
 
+        private void Start()
+        {
+            if (MobileInputManager.IsMobile)
+            {
+                // モバイル環境では画面タップによる発射・リトライ操作となるため、対応する案内文言へ設定する
+                if (startText != null)
+                {
+                    startText.text = "Tap to Start";
+                }
+
+                if (retryText != null)
+                {
+                    retryText.text = "Tap to Retry";
+                }
+
+                return;
+            }
+
+            // PC環境ではキーボードによる発射・リトライ操作となるため、対応する案内文言へ設定する
+            if (startText != null)
+            {
+                startText.text = "Space to \nStart";
+            }
+
+            if (retryText != null)
+            {
+                retryText.text = "R to Retry";
+            }
+        }
+
         public void OnEnable()
         {
             gameManager.OnGameStarted += OnGameStarted;

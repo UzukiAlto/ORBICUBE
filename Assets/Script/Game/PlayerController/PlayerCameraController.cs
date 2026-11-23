@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.OnScreen;
 using MainSystem;
 using DG.Tweening;
 
@@ -46,8 +47,8 @@ namespace Game
 
         protected override void OnCameraMoveStart(Vector2 pointerPos)
         {
-            // ポーズボタン等の操作UIをクリックした際は、カーソルをロックせずUIクリックを成立させるため
-            if (IsPointerOverPauseUI())
+            // ポーズボタンやジョイスティック等の操作UIをクリックした際は、カメラ回転を開始せずUI操作を優先させるため
+            if (IsPointerOverPauseUI(pointerPos))
             {
                 return;
             }
@@ -55,15 +56,24 @@ namespace Game
             base.OnCameraMoveStart(pointerPos);
         }
 
-        private bool IsPointerOverPauseUI()
+        private bool IsPointerOverPauseUI(Vector2 viewportPos)
         {
             if (EventSystem.current == null)
             {
                 return false;
             }
 
-            Vector2 screenPos = Vector2.zero;
-            if (Mouse.current != null)
+            // マルチタッチ時に1本目の指（Pointer.current）ではなく、実際にカメラ回転を開始した指の座標で判定するため
+            Vector2 screenPos;
+            if (currentScreen != null && currentScreen.screenCamera != null)
+            {
+                screenPos = currentScreen.screenCamera.ViewportToScreenPoint(viewportPos);
+            }
+            else if (Pointer.current != null)
+            {
+                screenPos = Pointer.current.position.ReadValue();
+            }
+            else if (Mouse.current != null)
             {
                 screenPos = Mouse.current.position.ReadValue();
             }
@@ -87,10 +97,12 @@ namespace Game
                     continue;
                 }
 
-                // ポーズボタンのコンポーネント（MenuCubeやEventTrigger、Button等）を持つUIを検知
+                // ポーズボタンやジョイスティック等の操作UIがドラッグ開始位置にある場合はカメラ回転から除外するため
                 if (result.gameObject.GetComponentInParent<MenuCube>() != null ||
                     result.gameObject.GetComponentInParent<EventTrigger>() != null ||
-                    result.gameObject.GetComponentInParent<Button>() != null)
+                    result.gameObject.GetComponentInParent<Button>() != null ||
+                    result.gameObject.GetComponentInParent<Joystick>() != null ||
+                    result.gameObject.GetComponentInParent<OnScreenControl>() != null)
                 {
                     return true;
                 }
